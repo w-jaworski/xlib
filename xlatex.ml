@@ -25,17 +25,18 @@
 *)
 
 let escape_string s =
-  Int.fold 0 (String.length s - 1) "" (fun t i ->
-      match String.sub s i 1 with
-        "_" -> t ^ "\\_"
-      | "#" -> t ^ "\\#"
-      | "%" -> t ^ "\\%"
-      | "\"" -> t ^ "''"
-      | "\\" -> t ^ "b/"
-      | "{" -> t ^ "\\{"
-      | "}" -> t ^ "\\}"
-      | "µ" -> t ^ "{}$\\mu${}"
-      | c -> t ^ c)
+  let l = Xlist.rev_map (Xunicode.utf8_chars_of_utf8_string s) (function
+        "_" -> "\\_"
+      | "#" -> "\\#"
+      | "%" -> "\\%"
+      | "&" -> "\\&"
+      | "\"" -> "''"
+      | "\\" -> "b/"
+      | "{" -> "\\{"
+      | "}" -> "\\}"
+      | "µ" -> "{}$\\mu${}"
+      | c -> c) in
+  String.concat "" (List.rev l)
 
 let tikz_header =
   String.concat "\n" [
@@ -57,7 +58,7 @@ let a0poster_header papersize use_conceptgraph =
   String.concat "\n" ([
       "\\documentclass{article}";
       (*     "\\documentclass[portrait,final]{a0poster}"; *)
-      "\\usepackage[" ^ papersize ^ "paper, left=2.5cm, right=2.5cm, top=3.5cm, bottom=3.5cm, headsep=1.2cm]{geometry}";
+      "\\usepackage[" ^ papersize ^ ", left=2.5cm, right=2.5cm, top=3.5cm, bottom=3.5cm, headsep=1.2cm]{geometry}";
       (*     "\\newgeometry{tmargin=3cm, bmargin=3cm, lmargin=0.5cm, rmargin=0.5cm}"; *)
       (* "\\usepackage{a4wide}"; *)
       "\\usepackage{amsmath}";

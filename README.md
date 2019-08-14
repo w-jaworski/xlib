@@ -9,9 +9,10 @@ and a bunch of file reading functions.
 Install
 -------
 
-Xlib requires OCaml compiler (version 4.02.3 or newer) together with Zip and Bz2 library.
+Xlib requires OCaml compiler (version 4.02.3 or newer) together with Zip and Bz2 library
+(packages ``libzip-ocaml-dev`` and ``libbz2-ocaml-dev`` for Ubuntu).
 
-    make install
+    sudo make install
 
 by default, Xlib is installed in the ``ocamlc -where'/xlib`` directory.
 you can change it by editing the ``Makefile``.
