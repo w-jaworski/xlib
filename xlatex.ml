@@ -35,6 +35,8 @@ let escape_string s =
       | "{" -> "\\{"
       | "}" -> "\\}"
       | "µ" -> "{}$\\mu${}"
+      | "⟨" -> "{}$\\langle${}"
+      | "⟩" -> "{}$\\rangle${}"
       | c -> c) in
   String.concat "" (List.rev l)
 
