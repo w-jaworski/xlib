@@ -116,7 +116,7 @@ let rec find_atomic_symbols l =
     | X "true" -> C "true"
     | X "false" -> C "false"
     | X x -> X x
-    | _ -> failwith "find_atomic_symbols"))
+    | _ -> failwith "Xjson.find_atomic_symbols"))
 
 let rec find_brackets brackets rev = function
       (O s) :: l ->
@@ -127,7 +127,7 @@ let rec find_brackets brackets rev = function
 (*            print_endline ("find_brackets 2: " ^ string_of_syntax_list found); *)
            find_brackets brackets (B(s,t,found) :: rev) l
          with Not_found -> find_brackets brackets ((O s) :: rev) l)
-    | B _ :: _ -> failwith "find_brackets"
+    | B _ :: _ -> failwith "Xjson.find_brackets"
     | t :: l -> find_brackets brackets (t :: rev) l
     | [] -> List.rev rev
 
@@ -141,9 +141,9 @@ and find_rbracket rb brackets rev = function
 (*            print_endline ("find_rbracket 2: " ^ string_of_syntax_list found); *)
            find_rbracket rb brackets ((B(s,t,found)) :: rev) l
          with Not_found -> find_rbracket rb brackets ((O s) :: rev) l)
-    | (B _) :: _ -> failwith "find_rbracket 1"
+    | (B _) :: _ -> failwith "Xjson.find_rbracket 1"
     | t :: l -> find_rbracket rb brackets (t :: rev) l
-    | [] -> failwith "find_rbracket 2"
+    | [] -> failwith "Xjson.find_rbracket 2"
 
 let rec split_op_comma found rev = function
       (O ",") :: l -> split_op_comma ((List.rev rev) :: found) [] l
@@ -151,7 +151,7 @@ let rec split_op_comma found rev = function
     | [] -> if rev = [] then List.rev found else List.rev ((List.rev rev) :: found)
 
 let rec merge_quoted2 rev = function
-      [] -> failwith "merge_quoted2"
+      [] -> failwith "Xjson.merge_quoted2"
     | "\"" :: tokens -> String.concat "" (List.rev rev), tokens
     | "\\" :: "\"" :: tokens -> merge_quoted2 ("\"" :: rev) tokens
     | "\\" :: "\\" :: tokens -> merge_quoted2 ("\\" :: rev) tokens
@@ -162,8 +162,8 @@ let rec merge_quoted2 rev = function
 	   | 'n' -> merge_quoted2 ("\n" :: rev) (Xstring.cut_prefix "n" s :: tokens)
 	   | 'r' -> merge_quoted2 ("\r" :: rev) (Xstring.cut_prefix "r" s :: tokens)
 	   | 't' -> merge_quoted2 ("\t" :: rev) (Xstring.cut_prefix "t" s :: tokens)
-	   | _ -> failwith "merge_quoted2")
-    | "\\" :: _ -> failwith "merge_quoted2"
+	   | _ -> failwith "Xjson.merge_quoted2")
+    | "\\" :: _ -> failwith "Xjson.merge_quoted2"
     | s :: tokens -> merge_quoted2 (s :: rev) tokens
 
 let rec merge_quoted rev = function
@@ -182,12 +182,14 @@ let rec parse_tokens = function
   | [C "null"] -> JNull
   | [C "true"] -> JTrue
   | [C "false"] -> JFalse
-  | [X x] -> if is_number x then JNumber x else failwith ("parse_tokens: " ^ x)
-  | l -> failwith ("parse_tokens: " ^ string_of_syntax_list l)
+  | [X ""] -> failwith "Xjson.parse_tokens: empty atomic symbol"
+  | [X x] -> if is_number x then JNumber x else failwith ("Xjson.parse_tokens: " ^ x)
+  | [] -> failwith "Xjson.parse_tokens: empty token list"
+  | l -> failwith ("Xjson.parse_tokens: " ^ string_of_syntax_list l)
 
 and parse_entry = function
     T e :: O ":" :: l -> e, parse_tokens l
-  | _ -> failwith "parse_entry"
+  | _ -> failwith "Xjson.parse_entry"
 
 let json_of_string s =
     let tokens = List.rev (Xlist.rev_map (Str.full_split
