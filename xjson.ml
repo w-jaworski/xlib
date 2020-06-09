@@ -162,6 +162,12 @@ let rec merge_quoted2 rev = function
 	   | 'n' -> merge_quoted2 ("\n" :: rev) (Xstring.cut_prefix "n" s :: tokens)
 	   | 'r' -> merge_quoted2 ("\r" :: rev) (Xstring.cut_prefix "r" s :: tokens)
 	   | 't' -> merge_quoted2 ("\t" :: rev) (Xstring.cut_prefix "t" s :: tokens)
+	   | 'u' -> 
+	      if Xstring.size s < 5 then failwith "Xjson.merge_quoted2" else
+	      let t = String.sub s 1 4 in
+	      let x = Scanf.sscanf t "%x" (fun y -> y) in
+	      let t2 = Xunicode.string_of_uchar x in
+	      merge_quoted2 (t2 :: rev) (Xstring.cut_prefix "u0000" s :: tokens)
 	   | _ -> failwith "Xjson.merge_quoted2")
     | "\\" :: _ -> failwith "Xjson.merge_quoted2"
     | s :: tokens -> merge_quoted2 (s :: rev) tokens
@@ -206,3 +212,6 @@ let json_of_string s =
     let l = find_atomic_symbols tokens in
     let l = find_brackets ["{","}";"[","]"] [] l in
     parse_tokens l
+
+(* TODO: można zrobić fold po liście zawartej w pliku *)
+    
