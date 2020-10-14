@@ -86,6 +86,21 @@ let rec json_to_string_fmt spaces = function
   | JEmpty -> (*"\"empty\""*)"null"
   | JContradiction -> "contradiction"
 
+let rec json_to_string_fmt2 spaces = function
+    JObject[k,v] -> "{" ^ Printf.sprintf "\"%s\": %s" (json_escape k) (json_to_string_fmt2 (spaces ^ "  ") v) ^ "}"
+  | JObject l -> "{" ^ String.concat "," (List.rev (Xlist.rev_map l (fun (k,v) ->
+        Printf.sprintf "\n%s\"%s\": %s" spaces (json_escape k) (json_to_string_fmt2 (spaces ^ "  ") v)))) ^ "}"
+  | JArray l -> "[" ^ String.concat "," (List.rev (Xlist.rev_map l (fun v ->
+        Printf.sprintf "\n%s%s" spaces (json_to_string_fmt2 (spaces ^ "  ") v)))) ^ "]"
+  | JString s -> "\"" ^ (json_escape s) ^ "\""
+  | JVar s -> "?" ^ (json_escape s)
+  | JNumber n -> json_convert_comma n
+  | JNull -> "null"
+  | JTrue -> "true"
+  | JFalse -> "false"
+  | JEmpty -> (*"\"empty\""*)"null"
+  | JContradiction -> "contradiction"
+
 type syntax =
       T of string
     | X of string

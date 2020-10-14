@@ -14,6 +14,7 @@ type json =
 val json_escape: string -> string
 
 val json_to_string_fmt: string -> json -> string
+val json_to_string_fmt2: string -> json -> string
 
 val json_to_string: json -> string
 
