@@ -73,6 +73,20 @@ let rec string_of_type_expr = function
   | Bool -> "boolean"
   | Null -> "null"
   
+let rec json_of_type_expr = function
+    Atom s -> JString s
+  | Plus [t] -> json_of_type_expr t
+  | Plus l -> JObject["union",JArray (Xlist.map l json_of_type_expr)]
+  | With [t] -> json_of_type_expr t
+  | With l -> JObject["with",JArray (Xlist.map l json_of_type_expr)]
+  | Var s ->  JObject["var",JString s]
+  | Param(a,b) -> JObject["param",json_of_type_expr a;"collection",json_of_type_expr b]
+  | Lst a -> JObject["list",json_of_type_expr a]
+  | Str -> JString "string"
+  | Num -> JString "number"
+  | Bool -> JString "boolean"
+  | Null -> JString "null"
+  
 let rec latex_of_type_expr = function
     Atom s -> "\\text{\\it " ^ s ^ "}"
   | Plus l -> String.concat " \\cup " (Xlist.map l latex_of_type_expr)

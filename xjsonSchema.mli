@@ -10,6 +10,8 @@ val parse_schema: json -> t list
 
 val load: string -> t list
 
+val json_of_type_expr: type_expr -> json
+
 val string_of_type_expr: type_expr -> string
 
 val latex_of: t -> string
