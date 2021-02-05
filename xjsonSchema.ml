@@ -64,7 +64,9 @@ let load filename =
 let rec string_of_type_expr = function
     Atom s -> s
   | Plus l -> String.concat " + " (Xlist.map l string_of_type_expr)
+(*   | Plus l -> "(" ^ String.concat " + " (Xlist.map l string_of_type_expr) ^ ")" *)
   | With l -> String.concat " & " (Xlist.map l string_of_type_expr)
+(*   | With l -> "[" ^ String.concat " & " (Xlist.map l string_of_type_expr) ^ "]" *)
   | Var s -> "'" ^ s
   | Param(a,b) -> string_of_type_expr a ^ " " ^ string_of_type_expr b
   | Lst a -> string_of_type_expr a ^ " LIST"
@@ -198,8 +200,15 @@ phi_1 & ... & phi_n |- sigma
 let rec subsume = function (* applied type * functor argument *)
     Null, t -> [[]]
   | t, Null -> [[]]
-  | Plus phi, sigma -> Xlist.fold phi [[]] (fun subst phi_i -> make_unique (merge subst (subsume (phi_i,sigma))))
-  | gamma, Plus phi -> make_unique (Xlist.fold phi [] (fun l phi_i -> subsume (gamma,phi_i) @ l))
+  | With [gamma], sigma -> subsume (gamma,sigma)
+  | Plus [], _ -> failwith "subsume 1: ni"
+  | Plus phi, Var v -> [[v,Plus phi]]
+  | Plus phi, sigma -> 
+(*      print_endline ("subsume 1: Plus phi=" ^ string_of_type_expr (Plus phi) ^ " sigma=" ^ string_of_type_expr sigma); *)
+     Xlist.fold (List.tl phi) (subsume (List.hd phi, sigma)) (fun subst phi_i -> make_unique (merge subst (subsume (phi_i,sigma))))
+  | gamma, Plus phi -> 
+(*      print_endline ("subsume 2: gamma=" ^ string_of_type_expr gamma ^ " Plus phi=" ^ string_of_type_expr (Plus phi)); *)
+     make_unique (Xlist.fold phi [] (fun l phi_i -> subsume (gamma,phi_i) @ l))
   | With phi, sigma -> make_unique (Xlist.fold phi [] (fun l phi_i -> subsume (phi_i,sigma) @ l))
   | Atom s1, Atom s2 -> if s1=s2 then [[]] else []
   | Atom s, Var v -> [[v,Atom s]]
@@ -232,8 +241,8 @@ let rec subsume = function (* applied type * functor argument *)
   | Bool, Bool -> [[]]
   | Bool, Var v -> [[v,Bool]]
   | Var v, Bool -> [[v,Bool]]
-  | Var _, Var _ -> failwith "subsume: ni"
-  | _, With _ -> failwith "subsume: ni"
+  | Var _, Var _ -> failwith "subsume 2: ni"
+  | _, With _ -> failwith "subsume 3: ni"
   
 let rec substitute subst = function
     Atom s -> Atom s
