@@ -306,3 +306,5 @@ let rec assign_type schema = function
   | JContradiction -> Atom "CONTRADICTION"
   | json -> failwith ("assign_type: " ^ json_to_string json)
   
+let subsume_atom t s =
+  subsume (t,Atom s) <> []

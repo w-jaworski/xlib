@@ -19,3 +19,5 @@ val latex_of: t -> string
 val prepare_schema: t list -> schema
 
 val assign_type: schema -> json -> type_expr
+
+val subsume_atom: type_expr -> string -> bool
