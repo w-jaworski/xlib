@@ -183,6 +183,7 @@ let rec merge_quoted2 rev = function
 	      let x = Scanf.sscanf t "%x" (fun y -> y) in
 	      let t2 = Xunicode.string_of_uchar x in
 	      merge_quoted2 (t2 :: rev) (Xstring.cut_prefix "u0000" s :: tokens)
+	   | '/' -> merge_quoted2 ("/" :: rev) (Xstring.cut_prefix "/" s :: tokens)
 	   | _ -> failwith "Xjson.merge_quoted2")
     | "\\" :: _ -> failwith "Xjson.merge_quoted2"
     | s :: tokens -> merge_quoted2 (s :: rev) tokens

@@ -47,6 +47,7 @@ module type TRIE =
     val empty : 'a t
     val create : (token list * 'a) list -> 'a t
     val find : 'a t -> string -> (token list * 'a list) list
+    val find_first : 'a t -> string -> token list * token list * 'a list * token list
     val load : string -> string list -> string t
     val load_multipath : (string * string list) list -> string t
     val rename_prods : 'a t -> ('a -> 'a) -> 'a t 
@@ -111,6 +112,11 @@ module Make : TRIE =
     let find trie s = 
       find_all trie (Token.tokenize s) []
 
+    let find_first trie s =
+      let orth = Token.tokenize s in
+      if orth = [] then raise Not_found else
+      find_one trie orth []
+      
     let load path filenames =
       let rules = Xlist.fold filenames [] (fun rules filename ->
         Xlist.fold (File.load_lines (path ^ filename ^ ".tab")) rules (fun rules s ->

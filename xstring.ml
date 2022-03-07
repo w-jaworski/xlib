@@ -55,3 +55,46 @@ let full_split pat s =
   List.rev (List.rev_map (function
       Str.Text s -> s
     | Str.Delim s -> s) (Str.full_split (Str.regexp pat) s))
+
+let rec remove_trailing_spaces s =
+  if s = "" then s else
+  if check_sufix " " s then
+    remove_trailing_spaces (cut_sufix " " s)
+  else s
+  
+let rec remove_heading_spaces s =
+  if s = "" then s else
+  if check_prefix " " s then
+    remove_heading_spaces (cut_prefix " " s)
+  else s
+  
+let remove_spaces s =
+  remove_heading_spaces (remove_trailing_spaces s)
+  
+let rec remove_trailing_white s =
+  if s = "" then s else
+  if check_sufix " " s then
+    remove_trailing_white (cut_sufix " " s) else
+  if check_sufix "\t" s then
+    remove_trailing_white (cut_sufix "\t" s) else
+  if check_sufix "\n" s then
+    remove_trailing_white (cut_sufix "\n" s) else
+  if check_sufix "\r" s then
+    remove_trailing_white (cut_sufix "\r" s)
+  else s
+  
+let rec remove_heading_white s =
+  if s = "" then s else
+  if check_prefix " " s then
+    remove_heading_white (cut_prefix " " s) else
+  if check_prefix "\t" s then
+    remove_heading_white (cut_prefix "\t" s) else
+  if check_prefix "\n" s then
+    remove_heading_white (cut_prefix "\n" s) else
+  if check_prefix "\r" s then
+    remove_heading_white (cut_prefix "\r" s)
+  else s
+  
+let remove_white s =
+  remove_heading_white (remove_trailing_white s)
+  
