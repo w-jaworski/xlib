@@ -24,7 +24,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  *)
 
-open Big_int
+open Big_int_Z
 
 type t = big_int
 

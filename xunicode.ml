@@ -76,7 +76,7 @@ let string_of_uchar x =
   let _ = Int.fold 0 (Xlist.size l - 1) l (fun l i ->
     Bytes.set s i (Char.chr (List.hd l));
     List.tl l) in
-  s
+  Bytes.to_string s
 (*  let s = Bytes.create (Xlist.size l) in
   let _ = Int.fold 0 (Xlist.size l - 1) l (fun l i ->
     Bytes.set s i (List.hd l);

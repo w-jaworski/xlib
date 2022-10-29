@@ -45,9 +45,9 @@ let file_in filename f =
   x
 
 let rec decompress_gzip ic s buf =
-  let n = Gzip.input ic s 0 (String.length s) in
+  let n = Gzip.input ic s 0 (Bytes.length s) in
   if n = 0 then () else (
-    Buffer.add_substring buf s 0 n;
+    Buffer.add_subbytes buf s 0 n;
     decompress_gzip ic s buf)
 
 let load_file_gzip filename =
@@ -59,9 +59,9 @@ let load_file_gzip filename =
   Buffer.contents buf
 
 let rec decompress_bz2 ic s buf =
-  let n = try Bz2.read ic s 0 (String.length s) with End_of_file -> 0 in
+  let n = try Bz2.read ic s 0 (Bytes.length s) with End_of_file -> 0 in
   if n = 0 then () else (
-    Buffer.add_substring buf s 0 n;
+    Buffer.add_subbytes buf s 0 n;
     decompress_bz2 ic s buf)
 
 let load_file_bz2 filename =
@@ -82,7 +82,7 @@ let load_file filename =
   let buf = Bytes.create size in
   file_in filename (fun file ->
     ignore (really_input file buf 0 size));
-  buf
+  Bytes.to_string buf
 
 let load_file_gen filename =
   if Xstring.check_sufix ".gz" filename then load_file_gzip filename else

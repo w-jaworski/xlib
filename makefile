@@ -1,6 +1,6 @@
-INCLUDES=-I +zip -I +bz2
+INCLUDES=-I +zip -I +bz2 -I +zarith
 OCAMLFLAGS=$(INCLUDES)
-OCAMLOPTFLAGS=$(INCLUDES)
+OCAMLOPTFLAGS=$(INCLUDES) zarith.cmxa
 SOURCES=xstring.ml file.ml int.ml xlist.ml xset.ml xmap.ml bitArray.ml xstd.ml xunicode.ml extArray.ml xlatex.ml lexer.ml xjson.mli xjson.ml xjsonSchema.mli xjsonSchema.ml trie.ml
 INSTALLDIR=`ocamlc -where`/xlib
 

@@ -9,8 +9,8 @@ and a bunch of file reading functions.
 Install
 -------
 
-Xlib requires OCaml compiler (version 4.02.3 or newer) together with Zip and Bz2 library
-(packages ``libzip-ocaml-dev`` and ``libbz2-ocaml-dev`` for Ubuntu).
+Xlib requires OCaml compiler (version 4.11.1 or newer) together with Zarith, Zip and Bz2 library
+(packages ``libzarith-ocaml-dev``, ``libzip-ocaml-dev`` and ``libbz2-ocaml-dev`` for Ubuntu).
 
     sudo make install
 
@@ -19,7 +19,7 @@ you can change it by editing the ``Makefile``.
 
 Credits
 -------
-Copyright (c) 2006-2018, Wojciech Jaworski
+Copyright (c) 2006-2022, Wojciech Jaworski
 
 Licence
 -------
