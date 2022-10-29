@@ -52,6 +52,17 @@ let filter l f = List.filter f l
 
 let assoc l s = List.assoc s l
 
+let rec rev_append rev l =
+  if rev = []  then l else
+  rev_append (List.tl rev) (List.hd rev :: l)
+
+let rec remove_rec s rev = function
+    x :: l -> if x = s then rev_append rev l else remove_rec s (x :: rev) l
+  | [] -> List.rev rev
+
+let remove l s = 
+  remove_rec s [] l
+
 (* 'a list list -> 'a list list *)
 (* [[a1;a2;...;an];[b1;b2;...;bk];[c1;c2;...;cn]] -> [[a1;b1;c1];[a1;b1;c2];...;[a1;b1;cn];[a1;b2;c1];...] *)
 let rec multiply_list = function
