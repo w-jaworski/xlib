@@ -21,3 +21,5 @@ val json_to_string: json -> string
 val json_of_string: string -> json
 
 val json_convert_comma: string -> string
+
+val fold_file: ?step:int -> ?limit:int -> string -> 'a -> ('a -> json -> 'a) -> 'a

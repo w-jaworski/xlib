@@ -110,13 +110,13 @@ type syntax =
 
 let rec string_of_syntax = function
       O s -> "„" ^ s ^ "”"
-    | X s -> s
+    | X s -> (*"'" ^*) s (*^ "'"*)
     | T s -> "\"" ^ s ^ "\""
     | C s -> s
     | B(s,t,l) -> s ^ string_of_syntax_list l ^ t
 
 and string_of_syntax_list l =
-    String.concat "" (Xlist.map l string_of_syntax)
+    String.concat " " (Xlist.map l string_of_syntax)
 
 let rec find_atomic_symbols l =
     List.rev (Xlist.rev_map l (function
@@ -133,6 +133,8 @@ let rec find_atomic_symbols l =
     | X x -> X x
     | _ -> failwith "Xjson.find_atomic_symbols"))
 
+exception Closing_bracket_not_found
+    
 let rec find_brackets brackets rev = function
       (O s) :: l ->
          (try
@@ -158,7 +160,7 @@ and find_rbracket rb brackets rev = function
          with Not_found -> find_rbracket rb brackets ((O s) :: rev) l)
     | (B _) :: _ -> failwith "Xjson.find_rbracket 1"
     | t :: l -> find_rbracket rb brackets (t :: rev) l
-    | [] -> failwith "Xjson.find_rbracket 2"
+    | [] -> raise Closing_bracket_not_found
 
 let rec split_op_comma found rev = function
       (O ",") :: l -> split_op_comma ((List.rev rev) :: found) [] l
@@ -193,6 +195,15 @@ let rec merge_quoted rev = function
     | "\"" :: tokens -> let s, tokens = merge_quoted2 [] tokens in merge_quoted ((T s) :: rev) tokens
     | x :: tokens -> merge_quoted ((X x) :: rev) tokens
 
+let rec merge_quoted_tail rev = function
+      [] -> List.rev rev, []
+    | "\"" :: tokens -> 
+       (try
+         let s, tokens = merge_quoted2 [] tokens in merge_quoted_tail ((T s) :: rev) tokens
+       with _ -> List.rev rev, "\"" :: tokens)
+    | [x] -> List.rev rev, [x]
+    | x :: tokens -> merge_quoted_tail ((X x) :: rev) tokens
+
 let is_number s =
   Int.fold 0 (String.length s-1) true (fun b i ->
     if String.get s i = '.' || String.get s i = '-' || (String.get s i >= '0' && String.get s i <= '9') then b else false)
@@ -213,21 +224,79 @@ and parse_entry = function
     T e :: O ":" :: l -> e, parse_tokens l
   | _ -> failwith "Xjson.parse_entry"
 
-let json_of_string s =
-    let tokens = List.rev (Xlist.rev_map (Str.full_split
+let make_split s =
+  List.rev (Xlist.rev_map (Str.full_split
                          (Str.regexp "\\]\\| \\|\t\\|\n\\|\r\\|\\:\\|{\\|}\\|,\\|\\[\\|\"\\|\\") s) (function
               Str.Text s -> s
-            | Str.Delim s -> s)) in
-    let tokens = merge_quoted [] tokens in
-    let tokens = List.rev (Xlist.fold tokens [] (fun tokens -> function
+            | Str.Delim s -> s))
+            
+let remove_white tokens = 
+  List.rev (Xlist.fold tokens [] (fun tokens -> function
           X " " -> tokens
         | X "\t" -> tokens
         | X "\n" -> tokens
         | X "\r" -> tokens
-        | t -> t :: tokens)) in
+        | t -> t :: tokens))
+        
+let json_of_string s =
+    let tokens = make_split s in
+    let tokens = merge_quoted [] tokens in
+    let tokens = remove_white tokens in
     let l = find_atomic_symbols tokens in
     let l = find_brackets ["{","}";"[","]"] [] l in
     parse_tokens l
 
-(* TODO: można zrobić fold po liście zawartej w pliku *)
+let remove_front t = function
+    O s :: l -> if s = t then l else failwith ("remove_front: pat=" ^ t ^ " found=" ^ s)
+  | [] -> failwith "remove_front: empty"
+  | l -> failwith ("remove_front: " ^ string_of_syntax_list (Xlist.prefix 10 l))(*; failwith "remove_front"*)
+ 
+let rec fold_file_rec limit count l s f =
+(*   Printf.printf "fold_file_rec: |l|=%d %s \n%!" (Xlist.size l) (string_of_syntax_list (Xlist.prefix 10 l)); *)
+  if l = [O "]"] then s,[] else
+  if Xlist.size l < 3 || !count = limit then s,l else
+  try
+    let l = remove_front (if !count = 0 then "[" else ",") l in
+    let l = remove_front "{" l in
+    let first,rest = find_rbracket "}" ["{","}";"[","]"] [] l in
+    let s = f s (parse_tokens [B("{","}",first)]) in
+    incr count;
+    fold_file_rec limit count rest s f
+  with Closing_bracket_not_found -> s,l
+
+let fold_file ?(step = 5000000) ?(limit = -1) filename s f =
+  let size = ref ((Unix.stat filename).Unix.st_size) in
+  let buf = Bytes.create step in
+  let tail = ref "" in
+  let r = ref s in
+  let count = ref 0 in
+  let rest = ref [] in
+  File.file_in filename (fun file ->
+    while !size <> 0 && !count <> limit do
+(*       Printf.printf "fold_file 1: size=%d count=%d\n%!" !size !count; *)
+      let tail_len = Xstring.size !tail in
+      let len = min (step - tail_len) !size in
+      Bytes.blit_string !tail 0 buf 0 tail_len;
+      ignore (really_input file buf tail_len len);
+      size := !size - len;
+      let tokens = make_split (Bytes.sub_string buf 0 (len+tail_len)) in
+      let tokens, tail2 = 
+        if !size = 0 then merge_quoted [] tokens, []
+        else merge_quoted_tail [] tokens in
+      tail := String.concat "" tail2;
+      let tokens = remove_white tokens in
+(*       print_endline ("fold_file 2: " ^ string_of_syntax_list tokens); *)
+      let l = !rest @ find_atomic_symbols tokens in
+(*       print_endline ("fold_file 3: " ^ string_of_syntax_list l); *)
+      let s,rest2 = 
+        if !count=0 && l=[O "[";O "]"] then !r,[]
+        else fold_file_rec limit count l !r f in
+      if Xlist.size l = Xlist.size rest2 && l <> [] then raise Closing_bracket_not_found else ( (* step < dłudość rekordu lub błąd w jsonie *)
+      r := s;
+      rest := rest2)
+    done;
+(*     Printf.printf "fold_file 4: size=%d count=%d\n%!" !size !count; *)
+(*    print_endline ("fold_file 5: " ^ string_of_syntax_list (Xlist.prefix 10 !rest)); *)
+    !r)
     
+
