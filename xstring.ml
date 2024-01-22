@@ -75,6 +75,8 @@ let rec remove_trailing_white s =
   if s = "" then s else
   if check_sufix " " s then
     remove_trailing_white (cut_sufix " " s) else
+  if check_sufix " " s then (*\194\160*)
+    remove_trailing_white (cut_sufix " " s) else
   if check_sufix "\t" s then
     remove_trailing_white (cut_sufix "\t" s) else
   if check_sufix "\n" s then
@@ -87,6 +89,8 @@ let rec remove_heading_white s =
   if s = "" then s else
   if check_prefix " " s then
     remove_heading_white (cut_prefix " " s) else
+  if check_prefix " " s then
+    remove_heading_white (cut_prefix " " s) else
   if check_prefix "\t" s then
     remove_heading_white (cut_prefix "\t" s) else
   if check_prefix "\n" s then
