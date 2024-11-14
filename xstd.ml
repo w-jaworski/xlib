@@ -47,8 +47,10 @@ module CharMap = Xmap.Make(OrderedChar)
 
 module IntSet = Xset.Make(Int)
 module StringSet = Xset.Make(String)
+module FloatSet = Xset.Make(OrderedFloat)
 
 module StringQMap = Xmap.MakeQ(String)
 module IntQMap = Xmap.MakeQ(Int)
+module FloatQMap = Xmap.MakeQ(OrderedFloat)
 
 module BitArrayMap = Xmap.Make(BitArray)

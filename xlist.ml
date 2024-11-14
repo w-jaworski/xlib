@@ -73,6 +73,15 @@ let rec multiply_list = function
 	fold list mul (fun mul args ->
 	  (a :: args) :: mul))
 
+
+let rec transpose = function
+    [] :: _ -> []
+  | [] -> []
+  | ll ->
+      let first,rest = fold ll ([],[]) (fun (first,rest) l ->
+        List.hd l :: first, List.tl l :: rest) in
+      List.rev first :: (transpose (List.rev rest))
+
 let rec remove_rec rev e = function
     [] -> List.rev rev
   | x :: l -> if x = e then remove_rec rev e l else remove_rec (x :: rev) e l
