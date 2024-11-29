@@ -100,13 +100,17 @@ let prefix n l =
   prefix_rec n [] l
   
 let select_min_priority l =
-  fold l (max_int,[]) (fun (best_prior,l) (prior,t) ->
+  if l = [] then failwith "select_min_priority" else
+  let prior,t = List.hd l in
+  fold (List.tl l) (prior,[t]) (fun (best_prior,l) (prior,t) ->
     if prior > best_prior then best_prior,l else
     if prior < best_prior then prior,[t] else
     best_prior,t :: l)
 
 let select_max_priority l =
-  fold l (min_int,[]) (fun (best_prior,l) (prior,t) ->
+  if l = [] then failwith "select_max_priority" else
+  let prior,t = List.hd l in
+  fold (List.tl l) (prior,[t]) (fun (best_prior,l) (prior,t) ->
     if prior < best_prior then best_prior,l else
     if prior > best_prior then prior,[t] else
     best_prior,t :: l)

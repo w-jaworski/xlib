@@ -1,7 +1,7 @@
 INCLUDES=-I +zip -I +bz2 -I +zarith
 OCAMLFLAGS=$(INCLUDES)
 OCAMLOPTFLAGS=$(INCLUDES)
-SOURCES=xstring.ml file.ml int.ml xlist.ml xset.ml xmap.ml bitArray.ml xstd.ml xunicode.ml extArray.ml xlatex.ml lexer.ml xjson.mli xjson.ml xjsonSchema.mli xjsonSchema.ml trie.ml
+SOURCES=xstring.ml file.ml int.ml xlist.ml xset.ml xmap.ml bitArray.ml xstd.ml xunicode.ml extArray.ml xlatex.ml lexer.ml xjson.mli xjson.ml xjsonSchema.mli xjsonSchema.ml trie.ml xrandom.ml
 INSTALLDIR=`ocamlc -where`/xlib
 
 all: xlib.cma
@@ -11,8 +11,8 @@ opt: xlib.cmxa
 install: all opt
 	mkdir -p $(INSTALLDIR)
 	cp xlib.cmxa xlib.a xlib.cma $(INSTALLDIR)
-	cp xstring.cmi file.cmi int.cmi xlist.cmi xset.cmi xmap.cmi bitArray.cmi xstd.cmi xunicode.cmi extArray.cmi xlatex.cmi lexer.cmi xjson.cmi xjsonSchema.cmi trie.cmi $(INSTALLDIR)
-	cp xstring.cmx file.cmx int.cmx xlist.cmx xset.cmx xmap.cmx bitArray.cmx xstd.cmx xunicode.cmx extArray.cmx xlatex.cmx lexer.cmx xjson.cmx xjsonSchema.cmx trie.cmx $(INSTALLDIR)
+	cp xstring.cmi file.cmi int.cmi xlist.cmi xset.cmi xmap.cmi bitArray.cmi xstd.cmi xunicode.cmi extArray.cmi xlatex.cmi lexer.cmi xjson.cmi xjsonSchema.cmi trie.cmi xrandom.cmi $(INSTALLDIR)
+	cp xstring.cmx file.cmx int.cmx xlist.cmx xset.cmx xmap.cmx bitArray.cmx xstd.cmx xunicode.cmx extArray.cmx xlatex.cmx lexer.cmx xjson.cmx xjsonSchema.cmx trie.cmx xrandom.cmx $(INSTALLDIR)
 
 xlib.cma: $(SOURCES)
 	ocamlc -linkall -a -o xlib.cma $(OCAMLFLAGS) $^
