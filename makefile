@@ -1,4 +1,4 @@
-INCLUDES=-I +zip -I +bz2 -I +zarith
+INCLUDES=-I +zip -I +bz2 -I +zarith -I +str -I +unix
 OCAMLFLAGS=$(INCLUDES)
 OCAMLOPTFLAGS=$(INCLUDES)
 SOURCES=xstring.ml file.ml int.ml xlist.ml xset.ml xmap.ml bitArray.ml xstd.ml xunicode.ml extArray.ml xlatex.ml lexer.ml xjson.mli xjson.ml xjsonSchema.mli xjsonSchema.ml trie.ml xrandom.ml
