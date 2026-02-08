@@ -49,12 +49,12 @@ let to_string = function
 let char_of_classified_char = function
     Digit s -> s
   | Sign s -> s
-  | Capital(s,t) -> s
-  | ForeignCapital(s,t) -> s
-  | Small(s,t) -> t
-  | ForeignSmall(s,t) -> t
+  | Capital(s,_) -> s
+  | ForeignCapital(s,_) -> s
+  | Small(_,t) -> t
+  | ForeignSmall(_,t) -> t
   | Emoticon s -> s
-  | Other(s,x) -> s
+  | Other(s,_) -> s
 
 
 let rec make_tail n rev x =
@@ -219,12 +219,12 @@ let lowercase_utf8_string s =
   let l = List.rev (Xlist.rev_map l (function
       Digit s -> s
     | Sign s -> s
-    | Capital(s,t) -> t
-    | ForeignCapital(s,t) -> t
-    | Small(s,t) -> t
-    | ForeignSmall(s,t) -> t
+    | Capital(_,t) -> t
+    | ForeignCapital(_,t) -> t
+    | Small(_,t) -> t
+    | ForeignSmall(_,t) -> t
     | Emoticon s -> s
-    | Other(s,x) -> s)) in
+    | Other(s,_) -> s)) in
   String.concat "" l
 
 let uppercase_utf8_string s =
@@ -232,12 +232,12 @@ let uppercase_utf8_string s =
   let l = List.rev (Xlist.rev_map l (function
       Digit s -> s
     | Sign s -> s
-    | Capital(s,t) -> s
-    | ForeignCapital(s,t) -> s
-    | Small(s,t) -> s
-    | ForeignSmall(s,t) -> s
+    | Capital(s,_) -> s
+    | ForeignCapital(s,_) -> s
+    | Small(s,_) -> s
+    | ForeignSmall(s,_) -> s
     | Emoticon s -> s
-    | Other(s,x) -> s)) in
+    | Other(s,_) -> s)) in
   String.concat "" l
 
 (* Uwaga: zakładam poprawność kodowania s *)
@@ -253,7 +253,7 @@ let rec utf8_chars_of_utf8_string_rec rev pos s =
 let utf8_chars_of_utf8_string s =
   List.rev (utf8_chars_of_utf8_string_rec [] 0 s)
 
-let rec first_utf8_char_of_utf8_string s =
+let first_utf8_char_of_utf8_string s =
   if s = "" then "","" else
   let n = decode_byte_simple 0 s in
   let len =

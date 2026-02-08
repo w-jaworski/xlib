@@ -24,8 +24,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  *)
 
-open Xstd
-
 module type TokenType =
   sig
 
@@ -51,6 +49,7 @@ module type TRIE =
     val load : string -> string list -> string t
     val load_multipath : (string * string list) list -> string t
     val rename_prods : 'a t -> ('a -> 'a) -> 'a t 
+    val print : 'a t -> ('a -> string) -> unit
 
   end
 

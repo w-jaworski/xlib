@@ -24,8 +24,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  *)
 
-open Unix
-
 let file_out filename f =
   let file = open_out filename in
   let x = f file in
@@ -100,7 +98,7 @@ let load_lines filename =
 let rec remove_copyright = function
     "#</COPYRIGHT>" :: l -> l
   | "#</COPYRIGHT>\r" :: l -> l
-  | s :: l -> remove_copyright l
+  | _ :: l -> remove_copyright l
   | [] -> failwith "remove_copyright"
 
 let rec remove_headers = function

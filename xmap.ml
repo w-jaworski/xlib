@@ -114,7 +114,7 @@ module MakeQ : QUANTITY_MAP =
     type key = Ord.t
     type t = int T.t
 
-    exception NF
+(*     exception NF *)
 
     let empty = T.empty
     let add map key = T.add_inc map key 1 (fun v -> v + 1)

@@ -92,7 +92,7 @@ let rec json_of_type_expr = function
 let rec latex_of_type_expr = function
     Atom s -> "\\text{\\it " ^ s ^ "}"
   | Plus l -> String.concat " \\cup " (Xlist.map l latex_of_type_expr)
-  | With l -> failwith "latex_of_type_expr"
+  | With _ -> failwith "latex_of_type_expr"
   | Var "alpha" -> "\\alpha"
   | Param(a,b) -> latex_of_type_expr a ^ " \\; " ^ latex_of_type_expr b
   | Lst a -> latex_of_type_expr a ^ " \\; \\text{\\it LIST}"
@@ -198,8 +198,8 @@ phi_1 & ... & phi_n |- sigma
 *)
   
 let rec subsume = function (* applied type * functor argument *)
-    Null, t -> [[]]
-  | t, Null -> [[]]
+    Null, _ -> [[]]
+  | _, Null -> [[]]
   | With [gamma], sigma -> subsume (gamma,sigma)
   | Plus [], _ -> failwith "subsume 1: ni"
   | Plus phi, Var v -> [[v,Plus phi]]

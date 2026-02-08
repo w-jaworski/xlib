@@ -118,7 +118,7 @@ let rec string_of_syntax = function
 and string_of_syntax_list l =
     String.concat " " (Xlist.map l string_of_syntax)
 
-let rec find_atomic_symbols l =
+let find_atomic_symbols l =
     List.rev (Xlist.rev_map l (function
       T t -> T t
     | X "[" -> O "["
@@ -299,4 +299,169 @@ let fold_file ?(step = 5000000) ?(limit = -1) filename s f =
 (*    print_endline ("fold_file 5: " ^ string_of_syntax_list (Xlist.prefix 10 !rest)); *)
     !r)
     
+type 'a pat =
+    AString of ('a -> string -> 'a)
+  | AInt of ('a -> int -> 'a)
+  | AObject of (string * 'a pat) list
+  | AArray of 'a pat list (* przetwarzamy po kolei elementy listy w JArray *)
+
+type ('a,'b) pat2 =
+    BString of ('b -> string -> 'b)
+  | BInt of ('b -> int -> 'b)
+  | BObject of (string * ('a,'b) pat2) list
+  | BArrayMap of ('b -> 'a list -> 'b) * 'a * 'a pat
+
+let rec find_apattern_rec t = function
+    JString s, AString f -> f t s
+  | JNumber n, AInt f -> f t (try int_of_string n with _ -> raise Not_found)
+  | JObject l, AObject pats ->
+      Xlist.fold pats t (fun t (key,pat) ->
+        let json = Xlist.assoc l key in
+        find_apattern_rec t (json,pat))
+  | JArray (json :: l), AArray (pat :: pats) ->
+      let t = find_apattern_rec t (json,pat) in
+      find_apattern_rec t (JArray l, AArray pats)
+  | JArray _, AArray [] -> t
+  | _ -> raise Not_found
+
+let rec find_bpattern_rec t = function
+    JString s, BString f -> f t s
+  | JNumber n, BInt f -> f t (try int_of_string n with _ -> raise Not_found)
+  | JObject l, BObject pats ->
+      Xlist.fold pats t (fun t (key,pat) ->
+        let json = Xlist.assoc l key in
+        find_bpattern_rec t (json,pat))
+  | JArray l, BArrayMap(f,s,pat) ->
+      f t (Xlist.map l (fun json -> find_apattern_rec s (json,pat)))
+  | _ -> raise Not_found
+
+let find_apattern json t pat =
+  find_apattern_rec t (json,pat)
+
+let find_bpattern json t pat =
+  find_bpattern_rec t (json,pat)
+
+let rec find_apattern_opt_rec t = function
+    JString s, AString f -> f t s
+  | JNumber n, AInt f -> f t (try int_of_string n with _ -> raise Not_found)
+  | JObject l, AObject pats ->
+      Xlist.fold pats t (fun t (key,pat) ->
+        try
+          let json = Xlist.assoc l key in
+          find_apattern_opt_rec t (json,pat)
+        with Not_found -> t)
+  | JArray (json :: l), AArray (pat :: pats) ->
+      let t = find_apattern_opt_rec t (json,pat) in
+      find_apattern_opt_rec t (JArray l, AArray pats)
+  | JArray _, AArray [] -> t
+  | _ -> raise Not_found
+
+let rec find_bpattern_opt_rec t = function
+    JString s, BString f -> f t s
+  | JNumber n, BInt f -> f t (try int_of_string n with _ -> raise Not_found)
+  | JObject l, BObject pats ->
+      Xlist.fold pats t (fun t (key,pat) ->
+        try
+          let json = Xlist.assoc l key in
+          find_bpattern_opt_rec t (json,pat)
+        with Not_found -> t)
+  | JArray l, BArrayMap(f,s,pat) ->
+      f t (Xlist.map l (fun json -> find_apattern_opt_rec s (json,pat)))
+  | _ -> raise Not_found
+
+let find_apattern_opt json t pat =
+  find_apattern_opt_rec t (json,pat)
+
+let find_bpattern_opt json t pat =
+  find_bpattern_opt_rec t (json,pat)
+
+let rec extract_apattern_rec t = function
+    JString s, AString f -> JNull,f t s
+  | JNumber n, AInt f -> JNull, f t (try int_of_string n with _ -> raise Not_found)
+  | JObject l, AObject pats ->
+      let l,t = Xlist.fold pats (l,t) (fun (l,t) (key,pat) ->
+        let l,json = Xlist.assoc_remove l key in
+        let json,t = extract_apattern_rec t (json,pat) in
+        if json = JNull then l,t else (key,json) :: l, t) in
+      if l = [] then JNull,t else JObject l, t
+  | JArray l, AArray pats ->
+      let l,t = extract_apattern_list t [] (l,pats) in
+      if l = [] then JNull,t else JArray l, t
+  | _ -> raise Not_found
+
+and extract_apattern_list t rev = function
+    json :: l, pat :: pats ->
+      let json,t = extract_apattern_rec t (json,pat) in
+      if json = JNull then extract_apattern_list t rev (l,pats) else extract_apattern_list t (json :: rev) (l,pats)
+  | l, [] -> Xlist.rev_append rev l, t
+  | _ -> raise Not_found
+
+let rec extract_bpattern_rec t = function
+    JString s, BString f -> JNull,f t s
+  | JNumber n, BInt f -> JNull, f t (try int_of_string n with _ -> raise Not_found)
+  | JObject l, BObject pats ->
+      let l,t = Xlist.fold pats (l,t) (fun (l,t) (key,pat) ->
+        let l,json = Xlist.assoc_remove l key in
+        let json,t = extract_bpattern_rec t (json,pat) in
+        if json = JNull then l,t else (key,json) :: l, t) in
+      if l = [] then JNull,t else JObject l, t
+  | JArray l, BArrayMap(f,s,pat) ->
+      let jsons, res = List.split (Xlist.map l (fun json -> extract_apattern_rec s (json,pat))) in
+      let jsons = List.rev (Xlist.fold jsons [] (fun jsons -> function JNull -> jsons | t -> t :: jsons)) in
+      if jsons = [] then JNull, f t res else JArray jsons, f t res
+  | _ -> raise Not_found
+
+let extract_apattern json t pat =
+  extract_apattern_rec t (json,pat)
+
+let extract_bpattern json t pat =
+  extract_bpattern_rec t (json,pat)
+
+let rec extract_apattern_opt_rec t = function
+    JString s, AString f -> JNull,f t s
+  | JNumber n, AInt f -> JNull, f t (try int_of_string n with _ -> raise Not_found)
+  | JObject l, AObject pats ->
+      let l,t = Xlist.fold pats (l,t) (fun (l,t) (key,pat) ->
+        let l,json = try Xlist.assoc_remove l key with Not_found -> l,JString "NF!@#$%^" in
+        let json,t =
+          if json = JString "NF!@#$%^" then JNull, t
+          else extract_apattern_opt_rec t (json,pat) in
+        if json = JNull then l,t else (key,json) :: l, t) in
+      if l = [] then JNull,t else JObject l, t
+  | JArray l, AArray pats ->
+      let l,t = extract_apattern_opt_list t [] (l,pats) in
+      if l = [] then JNull,t else JArray l, t
+  | _ -> raise Not_found
+
+and extract_apattern_opt_list t rev = function
+    json :: l, pat :: pats ->
+      let json,t = extract_apattern_opt_rec t (json,pat) in
+      if json = JNull then extract_apattern_opt_list t rev (l,pats) else extract_apattern_opt_list t (json :: rev) (l,pats)
+  | l, [] -> Xlist.rev_append rev l, t
+  | [], _ -> List.rev rev, t
+
+let rec extract_bpattern_opt_rec t = function
+    JString s, BString f -> JNull,f t s
+  | JNumber n, BInt f -> JNull, f t (try int_of_string n with _ -> raise Not_found)
+  | JObject l, BObject pats ->
+      let l,t = Xlist.fold pats (l,t) (fun (l,t) (key,pat) ->
+        let l,json = try Xlist.assoc_remove l key with Not_found -> l,JString "NF!@#$%^" in
+        let json,t =
+          if json = JString "NF!@#$%^" then JNull, t
+          else extract_bpattern_opt_rec t (json,pat) in
+        if json = JNull then l,t else (key,json) :: l, t) in
+      if l = [] then JNull,t else JObject l, t
+  | JArray l, BArrayMap(f,s,pat) ->
+      let jsons, res = List.split (Xlist.map l (fun json -> extract_apattern_opt_rec s (json,pat))) in
+      let jsons = List.rev (Xlist.fold jsons [] (fun jsons -> function JNull -> jsons | t -> t :: jsons)) in
+      if jsons = [] then JNull, f t res else JArray jsons, f t res
+  | _ -> raise Not_found
+
+let extract_apattern_opt json t pat =
+  extract_apattern_opt_rec t (json,pat)
+
+let extract_bpattern_opt json t pat =
+  extract_bpattern_opt_rec t (json,pat)
+
+
 

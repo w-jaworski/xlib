@@ -41,19 +41,19 @@ let add r x =
   next
 
 let set r i x =
-  let a,next,last,zero = !r in
+  let a,_,_,_ = !r in
   a.(i) <- x
 
 let size r =
-  let a,next,last,zero = !r in
+  let _,next,_,_ = !r in
   next
 
 let get r i =
-  let a,next,last,zero = !r in
+  let a,_,_,_ = !r in
   a.(i)
 
 let to_array r =
-  let a,next,last,zero = !r in
+  let a,next,_,zero = !r in
   let b = Array.make next zero in
   Int.iter 0 (next-1) (fun i -> b.(i) <- a.(i));
   b

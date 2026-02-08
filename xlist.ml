@@ -50,11 +50,18 @@ let sort l c = List.sort c l
 
 let filter l f = List.filter f l
 
-let assoc l s = List.assoc s l
-
 let rec rev_append rev l =
   if rev = []  then l else
   rev_append (List.tl rev) (List.hd rev :: l)
+
+let assoc l s = List.assoc s l
+
+let rec assoc_remove_rec key rev = function
+    (key2,v) :: l when key = key2 -> rev_append rev l, v
+  | e :: l -> assoc_remove_rec key (e :: rev) l
+  | [] -> raise Not_found
+
+let assoc_remove l key = assoc_remove_rec key [] l
 
 let rec remove_rec s rev = function
     x :: l -> if x = s then rev_append rev l else remove_rec s (x :: rev) l
@@ -82,12 +89,12 @@ let rec transpose = function
         List.hd l :: first, List.tl l :: rest) in
       List.rev first :: (transpose (List.rev rest))
 
-let rec remove_rec rev e = function
+(*let rec remove_rec rev e = function
     [] -> List.rev rev
   | x :: l -> if x = e then remove_rec rev e l else remove_rec (x :: rev) e l
 
 let remove_all l e =
-  remove_rec [] e l
+  remove_rec [] e l*)
 
 let remove_all l e =
   List.rev (fold l [] (fun l x -> if e = x then l else x :: l))
