@@ -54,3 +54,11 @@ module IntQMap = Xmap.MakeQ(Int)
 module FloatQMap = Xmap.MakeQ(OrderedFloat)
 
 module BitArrayMap = Xmap.Make(BitArray)
+
+let print_stringqmap qmap =
+  StringQMap.iter qmap (fun k v -> Printf.printf "%6d %s\n" v k)
+
+let print_stringqmap_keys qmap =
+  StringQMap.iter qmap (fun k _ -> Printf.printf "%s\n" k)
+
+

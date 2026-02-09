@@ -139,3 +139,28 @@ let catch_no_file load_fun data =
   try load_fun data
   with Unix.Unix_error(Unix.ENOENT, "stat", filename) ->
     (prerr_endline ("File " ^ filename ^ " not found."); data)
+
+
+let accepted_codepages = StringSet.of_list ["ASCII"; "ASCII/CRLF"; "UTF-8"; "UTF-8/CRLF"; "unknown"]
+
+let get_codepage path filename =
+  let ic = Unix.open_process_in ("enca -L pl -e " ^ path ^ filename) in
+  let s = input_line ic in
+  close_in ic;
+  s
+
+let convert_codepage path filename =
+  ignore (Sys.command ("enconv -L pl -x UTF-8 " ^ path ^ filename))
+
+let load_and_convert_codepage path filename =
+  let codepage = get_codepage path filename in
+(*   print_endline codepage; *)
+  if StringSet.mem accepted_codepages codepage then
+    File.load_file (path ^ filename)
+  else (
+    ignore (Sys.command ("cp " ^ path ^ filename ^ " " ^ path ^ filename ^ ".utf8"));
+    convert_codepage path (filename ^ ".utf8");
+    let s = File.load_file (path ^ filename ^ ".utf8") in
+    Sys.remove (path ^ filename ^ ".utf8");
+    s)
+
