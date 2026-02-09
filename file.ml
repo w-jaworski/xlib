@@ -141,7 +141,7 @@ let catch_no_file load_fun data =
     (prerr_endline ("File " ^ filename ^ " not found."); data)
 
 
-let accepted_codepages = StringSet.of_list ["ASCII"; "ASCII/CRLF"; "UTF-8"; "UTF-8/CRLF"; "unknown"]
+let accepted_codepages = ["ASCII"; "ASCII/CRLF"; "UTF-8"; "UTF-8/CRLF"; "unknown"]
 
 let get_codepage path filename =
   let ic = Unix.open_process_in ("enca -L pl -e " ^ path ^ filename) in
@@ -155,12 +155,12 @@ let convert_codepage path filename =
 let load_and_convert_codepage path filename =
   let codepage = get_codepage path filename in
 (*   print_endline codepage; *)
-  if StringSet.mem accepted_codepages codepage then
-    File.load_file (path ^ filename)
+  if List.mem codepage accepted_codepages then
+    load_file (path ^ filename)
   else (
     ignore (Sys.command ("cp " ^ path ^ filename ^ " " ^ path ^ filename ^ ".utf8"));
     convert_codepage path (filename ^ ".utf8");
-    let s = File.load_file (path ^ filename ^ ".utf8") in
+    let s = load_file (path ^ filename ^ ".utf8") in
     Sys.remove (path ^ filename ^ ".utf8");
     s)
 
