@@ -56,6 +56,12 @@ let full_split pat s =
       Str.Text s -> s
     | Str.Delim s -> s) (Str.full_split (Str.regexp pat) s))
 
+let contains_substring pat text =
+  try
+    let _ = Str.search_forward (Str.regexp_string pat) text 0 in
+    true
+  with Not_found -> false
+
 let rec remove_trailing_spaces s =
   if s = "" then s else
   if check_sufix " " s then

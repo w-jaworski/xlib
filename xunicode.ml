@@ -57,7 +57,7 @@ let char_of_classified_char = function
   | Other(s,_) -> s
 
 
-let rec make_tail n rev x =
+(*let rec make_tail n rev x =
   if n = 0 then rev,x else
   let v = (x land 0b111111) lor 0b10000000 in
   let x = x lsr 6 in
@@ -86,7 +86,13 @@ let string_of_uchar x =
   String.init (Xlist.size l) (fun _ ->
     let x = List.hd !r in
     r := List.tl !r;
-    x)*)
+    x)*)*)
+
+let string_of_uchar x =
+  let buf = Buffer.create 4 in
+  let u = Uchar.of_int x in
+  Buffer.add_utf_8_uchar buf u;
+  Buffer.contents buf
 
 let classify x =
   let s = string_of_uchar x in

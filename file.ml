@@ -143,24 +143,52 @@ let catch_no_file load_fun data =
 
 let accepted_codepages = ["ASCII"; "ASCII/CRLF"; "UTF-8"; "UTF-8/CRLF"; "unknown"]
 
-let get_codepage path filename =
-  let ic = Unix.open_process_in ("enca -L pl -e " ^ path ^ filename) in
+let get_codepage filename =
+  let ic = Unix.open_process_in ("enca -L pl -e " ^ filename) in
   let s = input_line ic in
   close_in ic;
   s
 
-let convert_codepage path filename =
-  ignore (Sys.command ("enconv -L pl -x UTF-8 " ^ path ^ filename))
+let convert_codepage filename =
+  ignore (Sys.command ("enconv -L pl -x UTF-8 " ^ filename))
 
-let load_and_convert_codepage path filename =
-  let codepage = get_codepage path filename in
+let load_and_convert_codepage filename =
+  let codepage = get_codepage filename in
 (*   print_endline codepage; *)
   if List.mem codepage accepted_codepages then
-    load_file (path ^ filename)
+    load_file filename
   else (
-    ignore (Sys.command ("cp " ^ path ^ filename ^ " " ^ path ^ filename ^ ".utf8"));
-    convert_codepage path (filename ^ ".utf8");
-    let s = load_file (path ^ filename ^ ".utf8") in
-    Sys.remove (path ^ filename ^ ".utf8");
+    ignore (Sys.command ("cp " ^ filename ^ " " ^ filename ^ ".utf8"));
+    convert_codepage (filename ^ ".utf8");
+    let s = load_file (filename ^ ".utf8") in
+    Sys.remove (filename ^ ".utf8");
     s)
 
+let name ?(path="") ?(suf="") s =
+  let path =
+    if path = "" then "" else
+    if Xstring.check_sufix "/" path then path else path ^ "/" in
+  let suf =
+    if suf = "" then "" else
+    if Xstring.check_prefix "." suf then suf else "." ^ suf in
+  path ^ s ^ suf
+
+let suffix filename =
+  try
+    let i = String.rindex filename '.' in
+    String.sub filename (i+1) (Xstring.size filename - i - 1)
+  with Not_found -> ""
+
+let fold_dir path s f =
+  let l = Array.to_list (Sys.readdir path) in
+  Xlist.fold l s f
+
+let iter_dir path f =
+  let l = Array.to_list (Sys.readdir path) in
+  Xlist.iter l f
+
+let mkdir path =
+  ignore(Sys.command ("mkdir -p " ^ path))
+
+let is_directory filename =
+  Sys.is_directory filename
