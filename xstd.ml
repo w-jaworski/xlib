@@ -49,6 +49,10 @@ module IntSet = Xset.Make(Int)
 module StringSet = Xset.Make(String)
 module FloatSet = Xset.Make(OrderedFloat)
 
+module StringListMap = Xmap.MakeList(String)
+module IntListMap = Xmap.MakeList(Int)
+module FloatListMap = Xmap.MakeList(OrderedFloat)
+
 module StringQMap = Xmap.MakeQ(String)
 module IntQMap = Xmap.MakeQ(Int)
 module FloatQMap = Xmap.MakeQ(OrderedFloat)

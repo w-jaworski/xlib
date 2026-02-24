@@ -53,6 +53,11 @@ module type MAP =
     val mapi : 'a t -> (key -> 'a -> 'b) -> 'b t
     val fold : 'a t -> 'b -> ('b -> key -> 'a -> 'b) -> 'b
 
+    val merge : 'a t -> 'b t -> ('a option * 'b option) t
+    val of_list : (key * 'a) list -> 'a t
+    val of_list_unique : (key * 'a) list -> 'a t
+    val of_list_acc : (key * 'a) list -> 'a list t
+
   end
 
 module Make : MAP =
@@ -77,11 +82,91 @@ module Make : MAP =
     let mem map key = T.mem key map
     let size map = T.fold (fun _ -> fun _ -> fun i -> i + 1) map 0
 
+    let iter map f = T.iter f map
+    let map m f = T.map f m
+    let mapi map f = T.mapi f map
+    let fold map s f = T.fold (fun a -> fun b -> fun c -> f c a b) map s
+
+    let merge map map2 =
+      let merged,map = fold map2 (empty,map) (fun (merged,map) k v2 ->
+        let v = try Some (find map k) with Not_found -> None in
+        add merged k (v ,Some v2), remove map k) in
+      fold map merged (fun merged k v -> add merged k (Some v, None))
+
+    let of_list l =
+      Xlist.fold l empty (fun map (k,v) -> add map k v)
+
+    let of_list_unique l =
+      Xlist.fold l empty (fun map (k,v) -> add_inc map k v (fun _ -> failwith "of_list_unique: duplicated key"))
+
+    let of_list_acc l =
+      Xlist.fold l empty (fun map (k,v) -> add_inc map k [v] (fun l -> v :: l))
+
+  end
+
+module type LIST_MAP =
+    functor (Ord : MapOrderedType) ->
+  sig
+
+    type key = Ord.t
+    type 'a t
+
+    val empty : 'a t
+    val is_empty : 'a t -> bool
+    val add : 'a t -> key -> 'a -> 'a t
+    val add_list : 'a t -> key -> 'a list -> 'a t
+    val remove : 'a t -> key -> 'a t
+    val find : 'a t -> key -> 'a list
+    val mem : 'a t -> key -> bool
+    val size : 'a t -> int
+
+    val iter : 'a t -> (key -> 'a list -> unit) -> unit
+    val map : 'a t -> ('a list -> 'b list ) -> 'b t
+    val mapi : 'a t -> (key -> 'a list -> 'b list) -> 'b t
+    val fold : 'a t -> 'b -> ('b -> key -> 'a list -> 'b) -> 'b
+
+    val merge : 'a t -> 'a t -> 'a t
+    val of_list : (key * 'a) list -> 'a t
+
+  end
+
+module MakeList : LIST_MAP =
+  functor(Ord : MapOrderedType) ->
+  struct
+
+    module T = Map.Make(Ord)
+    type key = Ord.t
+    type 'a t ='a list T.t
+
+    let empty = T.empty
+    let is_empty = T.is_empty
+
+    let add map key v =
+      try
+        T.add key (v :: T.find key map) map
+      with Not_found -> T.add key [v] map
+
+    let add_list map key l =
+      try
+        T.add key (l @ T.find key map) map
+      with Not_found -> T.add key l map
+
+    let remove map key = T.remove key map
+    let find map key = T.find key map
+    let mem map key = T.mem key map
+    let size map = T.fold (fun _ -> fun _ -> fun i -> i + 1) map 0
 
     let iter map f = T.iter f map
     let map m f = T.map f m
     let mapi map f = T.mapi f map
     let fold map s f = T.fold (fun a -> fun b -> fun c -> f c a b) map s
+
+    let merge map map2 =
+      fold map2 map (fun merged k l ->
+        add_list merged k l)
+
+    let of_list l =
+      Xlist.fold l empty (fun map (k,v) -> add map k v)
 
   end
 

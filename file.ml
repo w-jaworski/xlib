@@ -128,6 +128,11 @@ let fold_tab filename s f =
       String.sub line 0 (String.length line - 1) else line in
     f s (Xstring.split_delim "\t" line)) s l
 
+let load_pairs filename =
+  load_tab filename (function
+      [a; b] -> a, b
+    | line -> failwith ("load_pairs " ^ filename ^ ": " ^ String.concat "\t" line))
+
 let load_attr_val_pairs filename =
   List.rev (List.fold_left (fun l s ->
     if s = "" then l else
@@ -179,6 +184,12 @@ let suffix filename =
     String.sub filename (i+1) (Xstring.size filename - i - 1)
   with Not_found -> ""
 
+let cut_suffix filename =
+  try
+    let i = String.rindex filename '.' in
+    String.sub filename 0 i
+  with Not_found -> filename
+
 let fold_dir path s f =
   let l = Array.to_list (Sys.readdir path) in
   Xlist.fold l s f
@@ -192,3 +203,7 @@ let mkdir path =
 
 let is_directory filename =
   Sys.is_directory filename
+
+let copy src_filename dest_filename =
+  ignore (Sys.command ("cp " ^ src_filename ^ " " ^ dest_filename))
+

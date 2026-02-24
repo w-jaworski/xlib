@@ -268,6 +268,10 @@ let first_utf8_char_of_utf8_string s =
     7 - n in
   String.sub s 0 len, String.sub s len (String.length s - len)
 
+let uppercase_first_char_of_utf8_string s =
+  let a,b = first_utf8_char_of_utf8_string s in
+  uppercase_utf8_string a ^ b
+
 (*let rec text_to_uchars rev pos s =
   if pos = String.length s then rev else
   let n,x = decode_byte pos s in
