@@ -152,7 +152,7 @@ module MakeList : LIST_MAP =
       with Not_found -> T.add key l map
 
     let remove map key = T.remove key map
-    let find map key = T.find key map
+    let find map key = try T.find key map with Not_found -> []
     let mem map key = T.mem key map
     let size map = T.fold (fun _ -> fun _ -> fun i -> i + 1) map 0
 

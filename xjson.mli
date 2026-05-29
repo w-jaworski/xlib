@@ -48,6 +48,7 @@ val extract_bpattern_opt: json -> 'b -> ('a,'b) pat2 -> 'b * json*)
 type 'a pat =
     PString of ('a -> string -> 'a)
   | PInt of ('a -> int -> 'a)
+  | PFloat of ('a -> float -> 'a)
   | PObject of (string * 'a pat) list
   | PArray of 'a pat list
   | OObject of ('a -> (string * json) list -> 'a * json)

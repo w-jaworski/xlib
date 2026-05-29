@@ -480,6 +480,7 @@ let extract_bpattern_opt json t pat =
 type 'a pat =
     PString of ('a -> string -> 'a)
   | PInt of ('a -> int -> 'a)
+  | PFloat of ('a -> float -> 'a)
   | PObject of (string * 'a pat) list
   | PArray of 'a pat list (* przetwarzamy po kolei elementy listy w JArray *)
   | OObject of ('a -> (string * json) list -> 'a * json)
@@ -490,6 +491,7 @@ type 'a pat =
 let rec find_pattern_rec t = function
     JString s, PString f -> f t s
   | JNumber n, PInt f -> f t (try int_of_string n with _ -> raise Not_found)
+  | JNumber n, PFloat f -> f t (try float_of_string n with _ -> raise Not_found)
   | JObject l, PObject pats ->
       Xlist.fold pats t (fun t (key,pat) ->
         let json = Xlist.assoc l key in
@@ -509,6 +511,7 @@ let find_pattern json t pat =
 let rec find_pattern_opt_rec t = function
     JString s, PString f -> f t s
   | JNumber n, PInt f -> f t (try int_of_string n with _ -> raise Not_found)
+  | JNumber n, PFloat f -> f t (try float_of_string n with _ -> raise Not_found)
   | JObject l, PObject pats ->
       Xlist.fold pats t (fun t (key,pat) ->
         try
@@ -532,6 +535,7 @@ let find_pattern_opt json t pat =
 let rec extract_pattern_rec t = function
     JString s, PString f -> f t s, JNull
   | JNumber n, PInt f -> f t (try int_of_string n with _ -> raise Not_found), JNull
+  | JNumber n, PFloat f -> f t (try float_of_string n with _ -> raise Not_found), JNull
   | JObject l, PObject pats ->
       let l,t = Xlist.fold pats (l,t) (fun (l,t) (key,pat) ->
         let l,json = Xlist.assoc_remove l key in
@@ -559,6 +563,7 @@ let extract_pattern json t pat =
 let rec extract_pattern_opt_rec t = function
     JString s, PString f -> f t s, JNull
   | JNumber n, PInt f -> f t (try int_of_string n with _ -> raise Not_found), JNull
+  | JNumber n, PFloat f -> f t (try float_of_string n with _ -> raise Not_found), JNull
   | JObject l, PObject pats ->
       let l,t = Xlist.fold pats (l,t) (fun (l,t) (key,pat) ->
         let l,json = try Xlist.assoc_remove l key with Not_found -> l,JString "NF!@#$%^" in
