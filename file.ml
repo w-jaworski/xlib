@@ -199,11 +199,14 @@ let iter_dir path f =
   Xlist.iter l f
 
 let mkdir path =
-  ignore(Sys.command ("mkdir -p " ^ path))
+  ignore(Sys.command ("mkdir -p \"" ^ path ^ "\""))
 
 let is_directory filename =
   Sys.is_directory filename
 
 let copy src_filename dest_filename =
-  ignore (Sys.command ("cp " ^ src_filename ^ " " ^ dest_filename))
+  ignore (Sys.command ("cp \"" ^ src_filename ^ "\" \"" ^ dest_filename ^ "\""))
+
+let move src_filename dest_filename =
+  ignore (Sys.command ("mv \"" ^ src_filename ^ "\" \"" ^ dest_filename ^ "\""))
 

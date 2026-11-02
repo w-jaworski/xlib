@@ -111,7 +111,7 @@ let latex_compile_and_clean latex_path latex_filename =
   let status = Unix.close_process_in chan in
   process_pdflatex_status status;
   if status = Unix.WEXITED 0 then (
-    ignore (Sys.command ("rm " ^ latex_filename ^ ".tex"));
-    ignore (Sys.command ("rm " ^ latex_filename ^ ".aux"));
-    ignore (Sys.command ("rm " ^ latex_filename ^ ".log")));
+    Sys.remove (latex_filename ^ ".tex");
+    Sys.remove (latex_filename ^ ".aux");
+    Sys.remove (latex_filename ^ ".log"));
   Sys.chdir dir
